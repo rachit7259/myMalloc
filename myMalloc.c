@@ -71,7 +71,7 @@ void* myMalloc (size_t size)
         else
         {
             //found a free block
-            //split it if required size is smaller
+            //TODO: split block if required
 
             // if(block->size < size)
             //     splitBlock(block);
@@ -98,8 +98,59 @@ void myFree (void* ptr)
     assert(blockPtr->free == 0);
     assert(blockPtr->magic == 0x77777777 || blockPtr->magic == 0x12345678);
 
+    //TODO: merge blocks if necessary
+
     blockPtr->free = 1;
     blockPtr->magic = 0x55555555;
 
     return;
+}
+
+void *myRealloc(void *ptr, size_t size)
+{
+    if(!ptr)
+    {
+        return myMalloc(size);
+    }
+
+    struct blockMeta* blockPtr = getBlockPtr(ptr);
+
+    if(blockPtr->size >= size)
+    {
+        //split the block
+        return ptr;
+    }
+
+    //malloc new memory and free old memory
+    //copy data to the new space
+
+    void* newPtr;
+
+    newPtr = myMalloc(size);
+
+    if(!newPtr)
+        return NULL;
+    
+    memcpy(newPtr, ptr, blockPtr->size);
+
+    myFree(ptr);
+
+    return newPtr;
+}
+
+void *myCalloc(size_t numEle, size_t eleSize)
+{
+    if (numEle > SIZE_MAX / eleSize) {
+        // Handle potential overflow
+        fprintf(stderr, "calloc: Multiplication overflow detected!\n");
+        return NULL;
+    }
+
+    size_t size = numEle * eleSize;
+
+    void* ptr = myMalloc(size);
+
+    memset(ptr, 0, size);
+
+    return ptr;
 }
